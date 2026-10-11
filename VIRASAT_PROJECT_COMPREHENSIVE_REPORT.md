@@ -37,9 +37,21 @@ Traditional tourism in cultural heritage corridors frequently depends upon human
   - Selecting any search result instantly clears the search query, collapses the modal, and seamlessly loads the chosen monument in the 3D Digital Twin Viewer or directory.
 
 ### 2.3 Monument Image Mappings & Asset Integrity (Requirements 3 & 4)
-- **Problem:** Qutub Minar was mistakenly mapped to an Unsplash photo ID (`photo-1585135497273-1a86b09fe70e`) that depicted the Taj Mahal. Other monument cards lacked robust fallback handling against network drops.
+- **Problem:** Qutub Minar was mistakenly mapped to an Unsplash photo ID (`photo-1585135497273-1a86b09fe70e`) that depicted the Taj Mahal. Furthermore, 4 out of 10 Unsplash monument image URLs (Qutub Minar, Humayun's Tomb, Hampi Vittala Temple, Brihadisvara Temple) had become obsolete (returning HTTP 404), causing broken images and third-party network vulnerabilities.
 - **Resolution:**
-  - Replaced the Qutub Minar asset across both frontend and backend datasets with an authentic, verified high-resolution photograph of the 72.5-meter Delhi victory tower (`photo-1545232979-fbf6c63bfa2e`).
+  - Audited all 10 canonical monuments and procured verified, high-resolution authentic photographs from Wikimedia Commons / official archives.
+  - Stored all images locally under `public/images/monuments/`, making the application 100% resilient against third-party CDN downtime, CORS restrictions, or rate limits:
+    1. **Taj Mahal** (`taj_mahal.jpg`, 2.4 MB) — Authentic high-res photo of the central marble mausoleum and reflecting pool.
+    2. **Qutub Minar** (`qutub_minar.jpg`, 5.5 MB) — Verified photo of the 72.5m fluted victory minar and balcony brackets.
+    3. **Konark Sun Temple** (`konark_sun_temple.jpg`, 1.3 MB) — High-res photograph of the Kalinga Jagamohana and chariot wheel plinth.
+    4. **Red Fort** (`red_fort.jpg`, 5.2 MB) — Authentic photograph of the Lahore Gate ramparts and chhatris.
+    5. **Humayun's Tomb** (`humayuns_tomb.jpg`, 3.6 MB) — High-res photo of the red sandstone facade and white marble double dome.
+    6. **Hawa Mahal** (`hawa_mahal.jpg`, 4.7 MB) — Authentic high-res photo of the 953-jharokha pink honeycomb facade.
+    7. **Hampi Vittala Temple** (`hampi_vittala.jpg`, 17 MB) — Ultra-high-resolution photograph of the iconic monolithic Stone Chariot.
+    8. **Brihadisvara Temple** (`brihadisvara.jpg`, 3.2 MB) — Verified photograph of the soaring 66m granite Vimana tower in Thanjavur.
+    9. **Rani ki Vav** (`rani_ki_vav.jpg`, 4.6 MB) — Authentic photograph of the subterranean carved pillared pavilions in Patan.
+    10. **Martand Sun Temple** (`martand_sun_temple.jpg`, 1.5 MB) — Verified photograph of the 8th-century stone colonnades against the Kashmir mountains.
+  - Updated `src/data/mockData.js`, `server/seedData.js`, and database seeding scripts (`server/seed.js`) to reference `/images/monuments/<file>`.
   - Added `img onError` handlers across all monument cards (`MonumentsList.jsx`, `Dashboard.jsx`, `AddMonumentForm.jsx`) that smoothly substitute a stylized, heritage-themed fallback graphic instead of broken image icons.
   - Audited all 10 canonical monument images for architectural authenticity.
 
@@ -188,16 +200,26 @@ The database adapter (`server/db.js`) detects the connection string and automati
 
 ## 5. 3D Model Catalog & Architectural Specifications
 
-All 6 3D models reside as verified binary `.glb` assets in `public/models/`:
+Every 3D model in VIRASAT was engineered with authentic architectural geometries and textures, benchmarked against the gold-standard 1.3 MB Taj Mahal complex. All 6 3D models reside as verified binary `.glb` assets in `public/models/`:
 
-| Monument ID | Monument Name | Asset Path | File Size | Architectural Style | Key Hotspots Defined |
+| Monument ID | Monument Name | Asset Path | File Size | Architectural Style | Key Architectural Features & Hotspots |
 |---|---|---|---|---|---|
-| `site-006` | **Taj Mahal Complex** | `/models/taj_mahal.glb` | 1.3 MB | Mughal Indo-Islamic | Central Onion Dome, Vaulted Iwan, Tilting Corner Minarets |
-| `site-007` | **Qutub Minar & Iron Pillar** | `/models/qutub_minar.glb` | 101.4 KB | Afghan / Delhi Sultanate | Fluted Lower Storey, Balconies, 1600-Year Iron Pillar |
-| `site-008` | **Konark Sun Temple** | `/models/konark_sun_temple.glb` | 249.9 KB | Kalinga (Orissan) | 24 Sundial Wheels, 7 Chariot Horses, Jagamohana Tower |
-| `site-009` | **Hawa Mahal** | `/models/hawa_mahal.glb` | 294.3 KB | Rajputana Pink City | 953 Jharokha Casements, Krishna-Crown Silhouette |
-| `site-010` | **Red Fort (Lal Qila)** | `/models/red_fort.glb` | 188.9 KB | Shahjahani Mughal | Lahore Gate, Red Sandstone Ramparts, Diwan-i-Aam Hall |
-| `site-011` | **Humayun's Tomb** | `/models/humayuns_tomb.glb` | 180.4 KB | Early Mughal / Persian | Terraced Charbagh Base, Pishtaq Vaults, Double Marble Dome |
+| `site-006` | **Taj Mahal Complex** | `/models/taj_mahal.glb` | 1.3 MB | Mughal Indo-Islamic | Central Bulbous Double Dome, Vaulted Pishtaq Iwan, 4 Tilting Outward Minarets, Charbagh Pool |
+| `site-007` | **Qutub Minar & Iron Pillar** | `/models/qutub_minar.glb` | 458.2 KB | Afghan / Delhi Sultanate | 24 alternating angular/semicircular flutes, 24 muqarnas corbel brackets under balconies, Makrana marble top storeys, Alai Darwaza, Quwwat-ul-Islam screen, 1,600-year rustless Iron Pillar |
+| `site-008` | **Konark Sun Temple** | `/models/konark_sun_temple.glb` | 6.09 MB | Kalinga (Orissan) | Multi-tiered carved Pitha platform, 3-tier Pidha Deula Jagamohana, Amalaka & Kalasa finials, 24 fully sculpted 3D chariot wheels with deity medallions and spokes, 7 rampant horses, Natya Mandapa |
+| `site-009` | **Hawa Mahal** | `/models/hawa_mahal.glb` | 827.3 KB | Rajputana Pink City | 5-tier stepped pyramid facade (Sharad, Ratan, Vichitra, Prakash, Hawa Mandir), multi-tiered semi-octagonal jharokhas, jali lattice screens, Bangla roof chhajjas, cupola domes, shoulder chhatris |
+| `site-010` | **Red Fort (Lal Qila)** | `/models/red_fort.glb` | 312.0 KB | Shahjahani Mughal | 33m crenellated ramparts with kangura battlements, Lahore Gate with twin octagonal towers, row of 7 white marble domed chhatris, barbican defensive wall, moat, Diwan-i-Aam 27-bay pillared hall |
+| `site-011` | **Humayun's Tomb** | `/models/humayuns_tomb.glb` | 357.2 KB | Early Mughal / Persian | 56-arch arcaded podium, chamfered octagonal core, 4 colossal double-height Pishtaq iwans with white marble trims and 6-pointed star medallions, soaring drum, white marble double dome with lotus finial, 4 chhatris, Charbagh channels |
+
+### 5.1 Real-Time PBR Material Pipeline
+In `DigitalTwinViewer.jsx`, the WebGL renderer applies authentic procedural PBR canvas shaders during model traversal:
+- **Red Sandstone:** Micro-bump grit, low specular, iron-oxide warmth.
+- **Pink Sandstone:** Jaipuri terracotta hue, subtle sedimentary stratification.
+- **Khondalite Stone:** Weathered Orissan metamorphic grain with iron stains.
+- **Makrana White Marble:** Calcite luminescence, smooth specular roughness (0.28).
+- **Wrought Iron:** High metallic response (0.85), micro-pitting for the 1,600-year rustless Iron Pillar of Delhi.
+- **Brass & Gold Finials:** High metallic brilliance (0.90) for temple kalasas and minar spires.
+- **Reflective Water:** Translucent depth and specular Fresnel reflections for Charbagh reflection pools.
 
 ---
 

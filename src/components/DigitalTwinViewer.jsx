@@ -69,14 +69,14 @@ function createProceduralTexture(type, colorHex) {
     ctx.fillRect(0, 0, 1024, 1024);
 
     // Subtle translucent grey/beige marble veins
-    ctx.strokeStyle = 'rgba(180, 170, 160, 0.12)';
+    ctx.strokeStyle = 'rgba(180, 170, 160, 0.14)';
     ctx.lineWidth = 4;
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 22; i++) {
       ctx.beginPath();
       let x = Math.random() * 1024;
       let y = Math.random() * 1024;
       ctx.moveTo(x, y);
-      for (let j = 0; j < 5; j++) {
+      for (let j = 0; j < 6; j++) {
         x += (Math.random() - 0.5) * 300;
         y += (Math.random() - 0.5) * 300;
         ctx.lineTo(x, y);
@@ -85,21 +85,49 @@ function createProceduralTexture(type, colorHex) {
     }
   } else if (type === 'sandstone') {
     // Base rich red sandstone
-    ctx.fillStyle = colorHex || '#993D2A';
+    ctx.fillStyle = colorHex || '#94321D';
     ctx.fillRect(0, 0, 1024, 1024);
 
     // Sedimentary horizontal bedding stripes
-    for (let y = 0; y < 1024; y += 8) {
-      const alpha = 0.05 + Math.random() * 0.08;
+    for (let y = 0; y < 1024; y += 6) {
+      const alpha = 0.05 + Math.random() * 0.1;
       ctx.fillStyle = Math.random() > 0.5 ? `rgba(60, 20, 10, ${alpha})` : `rgba(210, 110, 70, ${alpha})`;
+      ctx.fillRect(0, y, 1024, 3 + Math.random() * 5);
+    }
+  } else if (type === 'pink_sandstone') {
+    // Warm Jaipur terracotta pink sandstone
+    ctx.fillStyle = colorHex || '#D96B5B';
+    ctx.fillRect(0, 0, 1024, 1024);
+
+    for (let y = 0; y < 1024; y += 8) {
+      const alpha = 0.06 + Math.random() * 0.08;
+      ctx.fillStyle = Math.random() > 0.5 ? `rgba(180, 70, 60, ${alpha})` : `rgba(245, 185, 170, ${alpha})`;
       ctx.fillRect(0, y, 1024, 4 + Math.random() * 6);
+    }
+    for (let i = 0; i < 2000; i++) {
+      ctx.fillStyle = 'rgba(255, 245, 235, 0.12)';
+      ctx.fillRect(Math.random() * 1024, Math.random() * 1024, 2, 2);
+    }
+  } else if (type === 'khondalite') {
+    // Weathered Kalinga Khondalite and chlorite stone
+    ctx.fillStyle = colorHex || '#7D6452';
+    ctx.fillRect(0, 0, 1024, 1024);
+
+    for (let y = 0; y < 1024; y += 10) {
+      const alpha = 0.08 + Math.random() * 0.12;
+      ctx.fillStyle = Math.random() > 0.5 ? `rgba(45, 35, 28, ${alpha})` : `rgba(165, 140, 120, ${alpha})`;
+      ctx.fillRect(0, y, 1024, 5 + Math.random() * 8);
+    }
+    for (let i = 0; i < 3500; i++) {
+      ctx.fillStyle = Math.random() > 0.5 ? 'rgba(30, 25, 20, 0.22)' : 'rgba(190, 175, 155, 0.18)';
+      ctx.fillRect(Math.random() * 1024, Math.random() * 1024, 3, 3);
     }
   } else if (type === 'iron') {
     // Dark wrought iron with metallic micro-grain
     ctx.fillStyle = '#262629';
     ctx.fillRect(0, 0, 1024, 1024);
     for (let i = 0; i < 4000; i++) {
-      ctx.fillStyle = Math.random() > 0.5 ? 'rgba(70, 70, 75, 0.15)' : 'rgba(15, 15, 20, 0.2)';
+      ctx.fillStyle = Math.random() > 0.5 ? 'rgba(75, 75, 80, 0.18)' : 'rgba(15, 15, 20, 0.25)';
       ctx.fillRect(Math.random() * 1024, Math.random() * 1024, 2, 2);
     }
   }
@@ -492,32 +520,64 @@ export default function DigitalTwinViewer({ selectedSite, onSelectSite, sitesLis
 
                 const matName = (child.material.name || child.name || '').toLowerCase();
 
-                // Golden brass finial spire
-                if (matName.includes('brass')) {
+                // Golden brass finials & spires
+                if (matName.includes('brass') || matName.includes('gold') || matName.includes('finial')) {
                   child.material.metalness = 0.88;
-                  child.material.roughness = 0.2;
+                  child.material.roughness = 0.18;
                   child.material.color.set(currentEra.finialColor || '#F59E0B');
                 }
-                // Reflecting lotus pool
-                else if (matName.includes('water') || matName.includes('tajwater')) {
+                // Reflecting pools, moats, and water canals
+                else if (matName.includes('water') || matName.includes('moat') || matName.includes('canal') || matName.includes('tajwater')) {
                   child.material.color.set(currentEra.poolColor || '#0284c7');
                   child.material.roughness = 0.08;
-                  child.material.metalness = 0.3;
+                  child.material.metalness = 0.32;
                   child.material.transparent = true;
                   child.material.opacity = 0.88;
                 }
                 // Lawns & Courtyards
                 else if (matName.includes('lawn') || matName.includes('grass')) {
                   child.material.color.set('#1E3D2B');
-                  child.material.roughness = 0.9;
+                  child.material.roughness = 0.92;
+                  child.material.metalness = 0.0;
                 }
-                // Marble Domes, Terraces & Facades
+                // Wrought Iron (Delhi Iron Pillar)
+                else if (matName.includes('iron')) {
+                  child.material.metalness = 0.82;
+                  child.material.roughness = 0.42;
+                  child.material.map = createProceduralTexture('iron');
+                  child.material.needsUpdate = true;
+                }
+                // Pink Sandstone & Jali (Hawa Mahal)
+                else if (matName.includes('pink') || matName.includes('jali')) {
+                  child.material.roughness = 0.72;
+                  child.material.metalness = 0.06;
+                  child.material.map = createProceduralTexture('pink_sandstone', '#D96B5B');
+                  child.material.needsUpdate = true;
+                }
+                // Khondalite & Chlorite (Konark Sun Temple)
+                else if (matName.includes('khondalite') || matName.includes('chlorite') || matName.includes('wheel')) {
+                  child.material.roughness = 0.82;
+                  child.material.metalness = 0.04;
+                  child.material.map = createProceduralTexture('khondalite', '#7D6452');
+                  child.material.needsUpdate = true;
+                }
+                // Red Sandstone (Qutub Minar, Red Fort, Humayun's Tomb, Taj base)
+                else if (matName.includes('sandstone') || matName.includes('red') || matName.includes('rampart') || matName.includes('podium')) {
+                  child.material.roughness = 0.76;
+                  child.material.metalness = 0.05;
+                  child.material.map = createProceduralTexture('sandstone', currentEra.sandstoneColor || '#94321D');
+                  child.material.needsUpdate = true;
+                }
+                // White Makrana Marble (Taj Mahal, Humayun Dome, Qutub top, Chhatris)
                 else {
                   if (!child.material.userData.origColor) {
                     child.material.userData.origColor = child.material.color.clone();
                   }
 
-                  // Apply live 4D historical weathering to marble & arches!
+                  child.material.map = createProceduralTexture('marble', currentEra.marbleColor || '#F9F7F2');
+                  child.material.needsUpdate = true;
+
+                  // Apply 4D historical weathering to marble surfaces
                   const orig = child.material.userData.origColor;
                   if (currentEra.year <= 1653) {
                     child.material.color.copy(orig);

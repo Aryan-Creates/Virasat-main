@@ -5,6 +5,8 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import { 
   monumentInputSchema, 
   normalizeMonumentName, 
@@ -50,13 +52,17 @@ describe('2. Monument Image Accuracy & Fallbacks', () => {
     const qutub = CANONICAL_MONUMENTS.find(m => m.id === 'site-007');
 
     assert.notEqual(qutub.imageUrl, taj.imageUrl, 'Qutub Minar is erroneously using the Taj Mahal image URL!');
-    assert.match(qutub.imageUrl, /^https?:\/\//);
+    assert.match(qutub.imageUrl, /^(https?:\/\/|\/images\/)/);
   });
 
   test('Every canonical monument must have a valid non-empty imageUrl and alt text', () => {
     for (const m of CANONICAL_MONUMENTS) {
-      assert.ok(m.imageUrl && m.imageUrl.length > 10, `${m.name} is missing a valid imageUrl`);
+      assert.ok(m.imageUrl && m.imageUrl.length > 5, `${m.name} is missing a valid imageUrl`);
       assert.ok(m.imageAlt && m.imageAlt.length > 3, `${m.name} is missing imageAlt text`);
+      if (m.imageUrl.startsWith('/images/')) {
+        const localPath = path.resolve(process.cwd(), 'public', m.imageUrl.replace(/^\//, ''));
+        assert.ok(fs.existsSync(localPath), `Image file for ${m.name} does not exist at ${localPath}`);
+      }
     }
   });
 });

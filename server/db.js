@@ -34,9 +34,11 @@ export class DatabaseAdapter {
     } else {
       console.log(`[DB] Initializing persistent SQLite database at: ${sqlitePath}`);
       this.sqliteDb = new DatabaseSync(sqlitePath);
-      // Enable WAL mode for better concurrency and foreign keys
-      this.sqliteDb.exec('PRAGMA journal_mode = WAL;');
-      this.sqliteDb.exec('PRAGMA foreign_keys = ON;');
+      try {
+        this.sqliteDb.exec('PRAGMA busy_timeout = 5000;');
+        this.sqliteDb.exec('PRAGMA journal_mode = WAL;');
+        this.sqliteDb.exec('PRAGMA foreign_keys = ON;');
+      } catch (_) {}
     }
   }
 
