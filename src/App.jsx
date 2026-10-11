@@ -1,39 +1,27 @@
-/**
- * VIRASAT - Main Application Component (1st-Year CS Student Project)
- * 
- * Student Concepts Used:
- * 1. React useState Hook: Manages active navigation tab and student-added monument data.
- * 2. Props Passing: Functions and state are passed to child components.
- * 3. Conditional Rendering: Renders OpeningScreen, 3D ModelViewer, or main layout pages.
- */
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from './components/Header';
-import Navigation from './components/Navigation';
 import Dashboard from './components/Dashboard';
 import ModelViewer3D from './components/ModelViewer3D';
-import MonumentsList from './components/MonumentsList';
 import AddMonumentForm from './components/AddMonumentForm';
 import AboutProject from './components/AboutProject';
-import OpeningScreen from './components/OpeningScreen';
 import { HERITAGE_SITES } from './data/mockData';
 import { apiClient } from './services/api';
 
 export default function App() {
-  // State 1: Control whether Opening Landing Screen is active
-  const [showOpeningScreen, setShowOpeningScreen] = useState(true);
-
-  // State 2: Active Navigation Tab ('dashboard' | '3dtwins' | 'monuments' | 'add' | 'about')
+  // Active Navigation Tab ('dashboard' | '3dtwins' | 'add' | 'about')
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // State 3: Selected Site for 3D Viewer
+  // Selected Site for 3D Viewer
   const [selectedSite, setSelectedSite] = useState(HERITAGE_SITES[0]);
 
-  // State 4: Dynamic Monuments Data Array
+  // Dynamic Monuments Data Array
   const [sitesList, setSitesList] = useState(HERITAGE_SITES);
 
-  // State 5: Backend Connectivity Status
+  // Backend Connectivity Status
   const [isBackendOnline, setIsBackendOnline] = useState(false);
+
+  // Ref to smoothly scroll to the Monuments Catalogue
+  const catalogueRef = useRef(null);
 
   // Load monuments from persistent backend API (with offline fallback)
   useEffect(() => {
@@ -46,7 +34,6 @@ export default function App() {
         const result = await apiClient.getMonuments();
         if (isMounted && result?.success && result.data && result.data.length > 0) {
           setSitesList(result.data);
-          // If the currently selected site is in the list, keep it; otherwise select the first
           if (!result.data.some(s => s.id === selectedSite?.id)) {
             setSelectedSite(result.data[0]);
           }
@@ -59,104 +46,134 @@ export default function App() {
     return () => { isMounted = false; };
   }, []);
 
-  // Handler: Add a new crowdsourced monument object into state
+  // Handler: Add a new crowdsourced monument
   const handleAddMonument = (newMonument) => {
     setSitesList((prevList) => [newMonument, ...prevList]);
+    setActiveTab('dashboard');
+    setTimeout(() => {
+      catalogueRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   // Handler: Select site and navigate to 3D Viewer
   const handleSelectSiteAndNavigate3D = (site) => {
     setSelectedSite(site);
     setActiveTab('3dtwins');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Render Opening Landing Screen if active
-  if (showOpeningScreen) {
-    return (
-      <OpeningScreen 
-        onEnter={() => setShowOpeningScreen(false)} 
-        onSelectFeature={(tab) => {
-          setActiveTab(tab);
-          setShowOpeningScreen(false);
-        }}
-      />
-    );
-  }
+  // Handler: Scroll down to catalogue section
+  const handleScrollToCatalogue = () => {
+    if (activeTab !== 'dashboard') {
+      setActiveTab('dashboard');
+      setTimeout(() => {
+        catalogueRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
+      catalogueRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#1A0507] text-[#FFFDF5] flex flex-col font-sans bg-jaali-pattern">
+    <div className="min-h-screen bg-[#FAF7F2] text-[#2C1810] flex flex-col font-sans selection:bg-[#4A0E17] selection:text-white">
       
-      {/* Top Header */}
+      {/* 1. Single Unified Top Header matching reference screenshot */}
       <Header 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
-        onOpenStartScreen={() => setShowOpeningScreen(true)}
-        onSelectSite={handleSelectSiteAndNavigate3D}
-        sitesList={sitesList}
+        onScrollToCatalogue={handleScrollToCatalogue}
       />
 
-      {/* Top Navigation Bar */}
-      <Navigation 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-      />
-
-      {/* Main Viewport Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* 2. Main Content Viewport */}
+      <main className="flex-1 w-full">
         
-        {/* Tab 1: Home Dashboard Overview */}
-        {activeTab === 'dashboard' && (
+        {/* Main Dashboard: Royal Maroon Hero + Clean Ivory Catalogue */}
+        {(activeTab === 'dashboard' || activeTab === 'monuments') && (
           <Dashboard 
-            setActiveTab={setActiveTab} 
             sitesList={sitesList}
             onSelectSite={handleSelectSiteAndNavigate3D}
+            setActiveTab={setActiveTab}
+            catalogueRef={catalogueRef}
           />
         )}
 
-        {/* Tab 2: 3D Monument Viewer */}
+        {/* 3D Digital Twin Viewer */}
         {activeTab === '3dtwins' && (
-          <ModelViewer3D 
-            selectedSite={selectedSite} 
-            onSelectSite={setSelectedSite}
-            sitesList={sitesList}
-          />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="mb-4 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  setActiveTab('dashboard');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-[#E8E1D5] hover:bg-gray-50 text-xs font-semibold text-[#4A0E17] shadow-sm cursor-pointer transition-all"
+              >
+                <span>← Back to Monuments Catalogue</span>
+              </button>
+            </div>
+            
+            <ModelViewer3D 
+              selectedSite={selectedSite} 
+              onSelectSite={setSelectedSite}
+              sitesList={sitesList}
+            />
+          </div>
         )}
 
-        {/* Tab 3: Monuments Directory */}
-        {activeTab === 'monuments' && (
-          <MonumentsList 
-            sitesList={sitesList}
-            onSelectSite={handleSelectSiteAndNavigate3D}
-          />
-        )}
-
-        {/* Tab 4: Crowdsource Form to Add New Monument */}
+        {/* Add Monument Form */}
         {activeTab === 'add' && (
-          <AddMonumentForm 
-            onAddMonument={handleAddMonument}
-          />
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mb-4">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4A0E17] hover:underline cursor-pointer"
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
+            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E8E1D5] shadow-sm">
+              <AddMonumentForm 
+                onAddMonument={handleAddMonument}
+              />
+            </div>
+          </div>
         )}
 
-        {/* Tab 5: About Project & Viva Defense Notes */}
+        {/* About Virasat & Viva Guide */}
         {activeTab === 'about' && (
-          <AboutProject />
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mb-4">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4A0E17] hover:underline cursor-pointer"
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
+            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E8E1D5] shadow-sm">
+              <AboutProject />
+            </div>
+          </div>
         )}
 
       </main>
 
-      {/* Student Project Footer */}
-      <footer className="bg-[#140305] border-t border-[#D4AF37]/25 py-6 text-center text-xs text-[#E5C158]/70">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="text-left">
-            <p><strong className="text-[#FFFDF5] font-serif-royal">VIRASAT</strong> — Indian Cultural Heritage Platform</p>
-            <p className="mt-0.5 text-[#D4AF37]/60">Department of Computer Science & Engineering • Digital Heritage Preservation Initiative</p>
+      {/* Clean Heritage Footer */}
+      <footer className="bg-[#4A0E17] text-white border-t border-[#6B1724] py-8 text-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-center sm:text-left">
+            <div className="flex items-center justify-center sm:justify-start gap-2">
+              <span className="font-serif-royal font-bold text-base text-white">VIRASAT</span>
+              <span className="text-[10px] text-[#D4AF37] uppercase tracking-widest font-semibold">• HERITAGE IN 3D</span>
+            </div>
+            <p className="text-[#E8D3D6] text-[11px] mt-1">
+              Interactive Digital Cultural Heritage Preservation & Virtual Tourism Platform
+            </p>
           </div>
-          
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1E0609] border border-[#D4AF37]/30 text-[11px] font-mono">
-            <span className={`w-2 h-2 rounded-full ${isBackendOnline ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
-            <span className="text-[#FFFDF5]">
-              {isBackendOnline ? 'Backend API: SQLite / Node.js Connected' : 'Offline Verified Mode'}
-            </span>
+
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#3D0A11] border border-[#6B1724] text-[11px] text-[#FDE6D2]">
+            <span className={`w-2 h-2 rounded-full ${isBackendOnline ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+            <span>{isBackendOnline ? 'Live SQLite Backend' : 'Offline Verified Mode'}</span>
           </div>
         </div>
       </footer>
